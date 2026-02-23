@@ -1,71 +1,11 @@
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(req) {
-  // 只允许 POST
-  if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: '只支持 POST 请求' }),
-      { status: 405, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  try {
-    const { message } = await req.json();
-    if (!message) {
-      return new Response(
-        JSON.stringify({ error: '消息不能为空' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: '服务器配置错误' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: '你是唐东杰布，藏戏创始人，用慈悲智慧的语气回答，限制在100字以内'
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 100
-      })
-    });
-
-    const data = await response.json();
+export default function handler(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     
-    if (!response.ok) {
-      throw new Error(data.error?.message || 'API 调用失败');
+    if (req.method === 'POST') {
+        return res.status(200).json({ 
+            reply: '后端工作正常！' 
+        });
     }
-
-    return new Response(
-      JSON.stringify({ reply: data.choices[0].message.content }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: '服务器内部错误' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
+    
+    return res.status(405).json({ error: '只支持POST' });
 }
